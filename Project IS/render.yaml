@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: flask-ml-app
+    env: python
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.10.13
+    buildCommand: "pip install --upgrade pip && pip install --no-cache-dir setuptools wheel && pip install --no-cache-dir -r requirements.txt"
+    startCommand: "gunicorn app:app"

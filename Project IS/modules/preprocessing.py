@@ -66,7 +66,7 @@ def process_data(filepath):
         X = df.drop('diagnosis', axis=1)
         y = df['diagnosis']
     else:
-        # หากไม่มี diagnosis ให้ถือว่าทุกคอลัมน์คือ x
+        # หากไม่มีเป้าหมายที่ชัดเจน ให้ถือว่าทุกคอลัมน์คือ x
         X = df
         y = None
         
@@ -83,4 +83,51 @@ def process_data(filepath):
     steps_info['step4_data'] = df_scaled.head().to_html(classes='table table-striped table-hover', index=False)
     
     # ส่งข้อมูล Dataset ที่ Preprocess เสร็จแล้ว (df_scaled) สำหรับใช้ Train โมเดลด้วย
+    return steps_info, df_scaled
+
+def process_insurance_data(filepath):
+    """
+    ฟังก์ชันสำหรับอ่านและเตรียมข้อมูลเฉพาะของ Healthcare Insurance Dataset
+    """
+    df = pd.read_csv(filepath)
+    steps_info = {}
+    
+    # Step 1: Raw Data Overview
+    steps_info['step1_title'] = "1. ข้อมูลดิบ (Healthcare Insurance Data)"
+    steps_info['step1_data'] = df.head().to_html(classes='table table-striped table-hover', index=False)
+    steps_info['step1_shape'] = f"จำนวนข้อมูล: {df.shape[0]} แถว, {df.shape[1]} คอลัมน์"
+    
+    # Step 2: Missing Value Handling
+    missing_before = df.isnull().sum().sum()
+    df = df.dropna()
+    missing_after = df.isnull().sum().sum()
+    steps_info['step2_title'] = "2. การตรวจสอบและจัดการค่าว่าง (Missing Values)"
+    steps_info['step2_desc'] = f"พบค่าว่างทั้งหมด: {missing_before} ค่า -> หลังจากทำความสะอาดเหลือ: {missing_after} ค่า"
+    
+    # Step 3: Encoding Categorical Data
+    steps_info['step3_title'] = "3. การปรับเปลี่ยนข้อมูลหมวดหมู่ (Label Encoding)"
+    for col in ['sex', 'smoker', 'region']:
+        if col in df.columns:
+            le = LabelEncoder()
+            df[col] = le.fit_transform(df[col])
+    steps_info['step3_desc'] = "แปลงคอลัมน์ที่เป็นข้อความ (sex, smoker, region) ให้กลายเป็นตัวเลขเพื่อการวิเคราะห์ทางสถิติ เช่น smoker (yes=1, no=0)"
+    
+    # Step 4: Feature Scaling (Optional for Regression, but good practice)
+    steps_info['step4_title'] = "4. การปรับสเกลข้อมูลมาตรฐาน (Standardization)"
+    steps_info['step4_desc'] = "ปรับช่วงของข้อมูล (Age, BMI, Children) ให้อยู่ในมาตรฐานเดียวกัน เพื่อให้น้ำหนักของแต่ละตัวแปรมีความสมดุล"
+    
+    if 'charges' in df.columns:
+        X = df.drop('charges', axis=1)
+        y = df['charges']
+    else:
+        X = df
+        y = None
+        
+    X_scaled = StandardScaler().fit_transform(X)
+    df_scaled = pd.DataFrame(X_scaled, columns=X.columns)
+    
+    if y is not None:
+        df_scaled['charges'] = y.values
+        
+    steps_info['step4_data'] = df_scaled.head().to_html(classes='table table-striped table-hover', index=False)
     return steps_info, df_scaled
